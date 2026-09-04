@@ -1,6 +1,6 @@
 {
   "slug": "match-dashboard",
-  "repository": "https://github.com/W3Booster/app-match-dashboard",
+  "repository": "https://github.com/W3Booster/app-example-match-dashboard",
   "theme": "arena",
   "overlay": false
 }

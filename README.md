@@ -2,15 +2,15 @@
 
 A small live match dashboard: players, teams, map, game clock, lifecycle, and compact windows. Runnable demo scenarios and full TypeScript source included.
 
-[Try it now](https://w3booster.github.io/app-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://github.com/W3Booster/app-examples)
+[Try it now](https://w3booster.github.io/app-example-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://github.com/W3Booster/app-examples)
 
 ## Run locally
 
 Node.js 22.22.3 or newer. No account, Warcraft III, desktop client, or database needed for demo mode.
 
 ```sh
-git clone https://github.com/W3Booster/app-match-dashboard.git
-cd app-match-dashboard
+git clone https://github.com/W3Booster/app-example-match-dashboard.git
+cd app-example-match-dashboard
 npm ci
 npm run dev
 ```
@@ -28,7 +28,7 @@ The checked-in binding belongs to the official Match Dashboard app. Cloning it d
 3. Bind your new public client ID:
 
    ```sh
-   npx w3booster-settings init YOUR_CLIENT_ID --endpoint https://api.w3booster.com
+   npm run app:fork -- YOUR_NEW_CLIENT_ID
    ```
 
 4. Commit the generated binding and package.json. Use **Test locally** with `http://localhost:5173/?demo=0`, then launch through W3Booster.

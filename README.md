@@ -1,8 +1,8 @@
 # Match Dashboard
 
-A small live match dashboard: players, teams, map, game clock, lifecycle, and compact windows. Runnable demo scenarios and full TypeScript source included.
+A small live match dashboard: players, teams, map, game clock, and lifecycle. Runnable demo scenarios and full TypeScript source included.
 
-[Try it now](https://w3booster.github.io/app-example-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://github.com/W3Booster/app-examples)
+[Try it now](https://w3booster.github.io/app-example-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://website.w3booster.com/developer/examples/)
 
 ## Run locally
 
@@ -38,7 +38,7 @@ A direct visit defaults to demo mode. **Live URLs must include `demo=0`**. Live 
 ## Project map
 
 - `src/render.ts`: this app’s feature code.
-- `src/main.ts`: SDK startup, diagnostics, host window action, and teardown/HMR.
+- `src/main.ts`: SDK startup, diagnostics and and teardown/HMR.
 - `src/scenarios.ts`: synthetic offline fixtures, lazy-loaded only in demo mode.
 - `src/w3booster.generated.ts`: generated identity and typed settings; do not edit by hand.
 - `scripts/browser-test.mjs`: real-browser scenario, responsive, and authorization-error checks.
@@ -59,6 +59,6 @@ Deploy `dist/` to an HTTPS static host. The included GitHub Actions workflow che
 
 The build emits `example-bindings.json` from the binding actually compiled into the app. Official catalog reapply checks each deployed app independently. No database or user credentials belong in this repository or Pages secrets.
 
-For a complete Angular product, [start from Match Vision](https://github.com/W3Booster/app-match-vision/blob/main/docs/START_FROM_MATCH_VISION.md). For other focused apps, see the [example directory](https://github.com/W3Booster/app-examples).
+For a complete Angular product, [start from Match Vision](https://github.com/W3Booster/app-match-vision/blob/main/docs/START_FROM_MATCH_VISION.md). For other focused apps, see the [example directory](https://website.w3booster.com/developer/examples/).
 
 MIT licensed; retain [LICENSE](LICENSE) when reusing source. No Warcraft artwork is bundled.

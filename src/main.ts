@@ -1,12 +1,12 @@
 import './style.css';
-import { canUseHostCapability, classifyW3BoosterError } from '@w3booster/sdk';
+import { classifyW3BoosterError } from '@w3booster/sdk';
 import { w3boosterApp } from './w3booster.generated';
 import { dashboard } from './render';
 import { element } from './ui';
 
 const query = new URLSearchParams(location.search);
 document.body.dataset.application = w3boosterApp.clientId;
-// One repository, one app. Only Clean Overlay also renders an overlay surface.
+// One repository, one app.
 const view = query.get('view') || 'application';
 const theme = 'arena';
 const presentation = { brand: 'MATCH DASHBOARD', title: 'Every match. At a glance.', description: 'A small live match dashboard: players, teams, map, game clock, lifecycle, and compact windows. Runnable demo scenarios and full TypeScript source included.' };
@@ -42,7 +42,6 @@ if (demo) {
   select.addEventListener('change', () => { const url = new URL(location.href); url.searchParams.set('scenario', select.value); location.assign(url); });
   label.append(select); controls.append(label);
 }
-const open = element('button', 'Open compact window'); open.disabled = true; controls.append(open);
 const feedback = element('p', '', 'notice'); feedback.setAttribute('role', 'status');
 const footer = element('footer');
 for (const [text, href] of [['Build your own', 'https://website.w3booster.com/developer/first-app/'], ['View source', 'https://github.com/W3Booster/app-example-match-dashboard'], ['SDK reference', 'https://website.w3booster.com/developer/api/']]) {
@@ -65,16 +64,7 @@ runtime.lifecycle.subscribe(snapshot => {
   document.body.dataset.connection = snapshot.status;
   document.body.dataset.synchronized = String(snapshot.isSynchronized);
   content.replaceChildren(dashboard(snapshot.state));
-  open.disabled = !canUseHostCapability(snapshot.host, 'window:open');
-  open.title = open.disabled ? 'Open this app inside W3Booster to use host actions.' : '';
   details.textContent = JSON.stringify({ mode: demo ? 'demo' : 'live', status: snapshot.status, synchronized: snapshot.isSynchronized, match: snapshot.state?.match.status, dataCapabilities: snapshot.state?.capabilities || [], host: snapshot.host, definitionRevision: w3boosterApp.revision }, null, 2);
-}, { signal });
-open.addEventListener('click', async () => {
-  try {
-    const parameters = new URLSearchParams(location.search); parameters.set('view', 'compact');
-    await runtime.client.host.openWindow({ path: `?${parameters}`, width: 520, height: 620 }, { signal: runtime.signal, timeout: 10000 });
-  }
-  catch { feedback.textContent = 'The host could not open a window. Check Connection & capabilities.'; }
 }, { signal });
 runtime.client.on('issue', issue => { feedback.textContent = `A recoverable ${issue.source} issue occurred. See the browser console.`; console.warn(issue.source, issue.error); }, { signal });
 try { await runtime.start(); }

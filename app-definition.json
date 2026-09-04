@@ -1,0 +1,39 @@
+{
+  "name": "Match Dashboard",
+  "description": "A small live match dashboard: players, teams, map, game clock, lifecycle, and compact windows. Runnable demo scenarios and full TypeScript source included.",
+  "surfaces": [
+    "application"
+  ],
+  "applicationUrl": "http://localhost:5173/?demo=0",
+  "scopes": [
+    "match:read",
+    "players:read",
+    "resources:read",
+    "heroes:read",
+    "overlay:read"
+  ],
+  "settingsSchema": {
+    "version": 1,
+    "sections": [
+      {
+        "id": "display",
+        "title": "Display",
+        "groups": [
+          {
+            "id": "appearance",
+            "title": "Appearance"
+          }
+        ],
+        "fields": [
+          {
+            "key": "display.title",
+            "label": "App title",
+            "type": "text",
+            "group": "appearance",
+            "default": "My first W3Booster app"
+          }
+        ]
+      }
+    ]
+  }
+}

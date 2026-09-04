@@ -1,0 +1,32 @@
+:root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; color: #e9eff8; background: #0b111c; font-synthesis: none; }
+* { box-sizing: border-box; } body { --accent:#76cced; --muted:#9aaabd; --line:#2a3a50; --panel:#131e2e; margin:0; min-height:100vh; background:#0b111c; }
+button,input,select { font:inherit; } a { color:inherit; text-decoration:none; } a:hover { text-decoration:underline; } button:disabled { opacity:.45; cursor:not-allowed; }
+.shell { max-width:1240px; margin:auto; padding:28px 40px; }
+header { display:flex; align-items:center; justify-content:space-between; gap:20px; padding-bottom:24px; border-bottom:1px solid var(--line); }
+.brand { font-size:12px; font-weight:800; letter-spacing:.1em; } .header-actions { display:flex; align-items:center; gap:18px; }
+.badge { font:10px ui-monospace,monospace; letter-spacing:.1em; padding:7px 10px; color:var(--accent); border:1px solid var(--line); border-radius:4px; }
+.repository-link { font-size:12px; font-weight:650; padding:10px 14px; border:1px solid var(--line); border-radius:6px; }
+.intro { padding:36px 0 10px; } h1,h2,h3,p { margin-top:0; } h1 { margin:10px 0 14px; font-size:clamp(32px,4.7vw,60px); line-height:1.04; letter-spacing:-.045em; font-weight:750; } h2 { font-size:25px; letter-spacing:-.025em; } h3 { overflow-wrap:anywhere; }
+p { color:var(--muted); line-height:1.65; font-size:14px; } .eyebrow { font:10px ui-monospace,monospace; letter-spacing:.14em; color:var(--accent); text-transform:uppercase; }
+nav { display:flex; gap:8px; flex-wrap:wrap; margin:14px 0; } nav a,button { border:1px solid var(--line); background:var(--panel); border-radius:5px; padding:10px 14px; color:inherit; cursor:pointer; font-size:12px; } nav a[aria-current] { border-color:var(--accent); color:var(--accent); }
+button:hover:enabled { border-color:var(--accent); } input,select { background:var(--panel); color:inherit; border:1px solid var(--line); border-radius:5px; padding:9px; }
+.controls { display:flex; flex-wrap:wrap; gap:14px; align-items:center; padding:4px 0 8px; font-size:11px; color:var(--muted); } .controls label { display:flex; align-items:center; gap:9px; } .source-link { margin-left:auto; color:var(--accent); font-weight:650; }
+.notice { font-size:11px; margin:10px 0; } .notice:empty { display:none; } .content { min-height:220px; margin-top:18px; } .diagnostics { color:var(--muted); font-size:11px; padding:16px 0; margin-top:20px; border-top:1px solid var(--line); } summary { cursor:pointer; }
+pre { white-space:pre-wrap; overflow-wrap:anywhere; font:12px/1.7 ui-monospace,monospace; } footer { display:flex; gap:24px; flex-wrap:wrap; font-size:11px; color:var(--muted); }
+:focus-visible { outline:3px solid var(--accent); outline-offset:4px; }
+
+/* Match Dashboard: a sports desk, not another metrics grid. */
+.match-desk { border:1px solid #2b435c; background:linear-gradient(130deg,#17283e,#0e1929); border-radius:8px; overflow:hidden; }
+.desk-topline,.desk-bottomline { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:15px 22px; font:10px ui-monospace,monospace; letter-spacing:.08em; color:#acbbce; background:#0c1725; }
+.mode-tag { background:#25445b; color:#9bddf5; padding:5px 8px; } .live-tag { color:#8ddcc6; }
+.match-timer { display:flex; align-items:center; flex-direction:column; gap:10px; padding:24px 0 20px; } .match-timer strong { font:600 clamp(40px,5vw,66px)/1 ui-monospace,monospace; letter-spacing:-.05em; color:#f5f8ff; } .timer-caption { font-size:8px; letter-spacing:.2em; color:#637f9b; }
+.arena { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1px; background:#263c54; border-top:1px solid #263c54; }
+.contender { position:relative; overflow:hidden; background:linear-gradient(135deg,#19364b,#142237); border-left:4px solid #6cceee; padding:22px 26px; min-height:140px; }
+.contender:nth-child(even) { border-color:#f2aa73; background:linear-gradient(135deg,#392d2b,#201f2d); } .contender .eyebrow { color:#91d8f0; } .contender:nth-child(even) .eyebrow { color:#edbb91; }
+.contender h3 { position:relative; margin:10px 0; font-size:clamp(22px,2.5vw,32px); letter-spacing:-.03em; color:#f4f8ff; } .contender-number { position:absolute; right:12px; top:16px; font:800 86px/1 ui-sans-serif,sans-serif; color:#ffffff08; } .team-label { margin:0; font:10px ui-monospace,monospace; color:#97aec3; }
+.desk-bottomline { border-top:1px solid #263c54; font-size:9px; }
+
+@media (max-width:680px) {
+  .shell { padding:20px 16px; } header { align-items:flex-start; gap:12px; } .header-actions { gap:8px; flex-wrap:wrap; justify-content:flex-end; } .brand { max-width:140px; font-size:10px; line-height:1.5; } .repository-link { font-size:10px; padding:8px; }
+  .intro { padding-top:28px; } .source-link { margin-left:0; } .arena,.resource-grid,.settings-workbench { grid-template-columns:1fr; } .settings-preview-panel { border-left:0; border-top:1px solid #4c3864; } .settings-panel,.settings-preview-panel { padding:23px; } .economy-heading { align-items:flex-start; flex-direction:column; } .desk-topline,.desk-bottomline { padding:12px; gap:8px; flex-wrap:wrap; } .studio-stage { padding:30px 16px; } .studio-info { grid-template-columns:1fr; gap:12px; } .broadcast-player strong { font-size:18px; } .studio-bar { flex-wrap:wrap; }
+}

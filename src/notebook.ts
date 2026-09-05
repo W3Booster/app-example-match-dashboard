@@ -1,6 +1,8 @@
 import type { ApplicationRuntime } from '@w3booster/sdk/app';
+import type { Race } from '@w3booster/sdk';
 import { element } from './ui';
-import { matchupFor, matchupKey, matchupTitle, type Matchup } from './notebook-model';
+import { matchupFor, matchupProblem, matchupKey, matchupTitle, races, raceLabel, type Matchup } from './notebook-model';
+import { isMode } from '@w3booster/sdk/standard-game';
 import { openNotes } from './notebook-storage';
 
 export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal: AbortSignal) {
@@ -10,8 +12,11 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
   const context = element('p', '', 'eyebrow');
   const heading = element('h2');
   const perspective = element('div');
+  const raceChoices = element('div', '', 'race-choices');
   const editor = element('div', '', 'note-editor');
   let shownKey = '', selectedPlayer = '', matchId = '', playerOptions = '';
+  let raceOptions = '';
+  let selectedRaces: Record<string, Race | undefined> = {};
 
   function show(matchup?: Matchup) {
     const key = matchup ? matchupKey(matchup) : '';
@@ -40,9 +45,10 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
   function update() {
     const snapshot = runtime.lifecycle.get(), state = snapshot.state;
     const active = snapshot.isSynchronized && state && state.match.status !== 'none';
-    if (active && state.match.id !== matchId) { matchId = state.match.id; selectedPlayer = ''; }
-    const playerId = selectedPlayer || (state?.match.isObserver || state?.match.isReplay ? '' : state?.match.broadcasterPlayerId || '');
-    const choices = active && (state.match.isObserver || state.match.isReplay || !state.match.broadcasterPlayerId) ? JSON.stringify([state.match.id, state.players.map(p => [p.id, p.name])]) : '';
+    if (active && state.match.id !== matchId) { matchId = state.match.id; selectedPlayer = ''; selectedRaces = {}; }
+    const detectedPlayer = state?.players.find(p => p.id === state.match.broadcasterPlayerId);
+    const playerId = selectedPlayer || (state?.match.isObserver || state?.match.isReplay ? '' : detectedPlayer?.id || '');
+    const choices = active && (state.match.isObserver || state.match.isReplay || !detectedPlayer) ? JSON.stringify([state.match.id, state.players.map(p => [p.id, p.name])]) : '';
     if (choices !== playerOptions) {
       playerOptions = choices; perspective.replaceChildren();
       if (choices && state) {
@@ -54,21 +60,40 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
         perspective.append(select);
       }
     }
-    const current = active ? matchupFor(state, playerId) : undefined;
+    // Random races can be hidden by the recorder. Ask only for missing data;
+    // never infer a race from private game information or change the SDK state.
+    const unknown = active && isMode(state.match.mode, '1v1') && state.players.length === 2 && state.players.some(p => p.id === playerId)
+      ? state.players.filter(p => !races.includes(p.race || '')) : [];
+    const raceSignature = JSON.stringify([matchId, playerId, unknown.map(p => p.id)]);
+    if (raceSignature !== raceOptions) {
+      raceOptions = raceSignature; raceChoices.replaceChildren();
+      for (const player of unknown) {
+        const label = element('label', player.id === playerId ? 'Your race ' : 'Opponent race ');
+        const select = element('select'); select.setAttribute('aria-label', player.id === playerId ? 'Your race' : 'Opponent race');
+        const prompt = element('option', 'Choose race'); prompt.value = ''; select.append(prompt);
+        for (const race of races) { const option = element('option', raceLabel(race)); option.value = race; select.append(option); }
+        select.value = selectedRaces[player.id] || '';
+        select.addEventListener('change', () => { selectedRaces[player.id] = races.includes(select.value) ? select.value as Race : undefined; update(); }, { signal });
+        label.append(select); raceChoices.append(label);
+      }
+    }
+    const resolved = active ? { ...state, players: state.players.map(p => ({ ...p, race: races.includes(p.race || '') ? p.race : selectedRaces[p.id] || p.race })) } : undefined;
+    const current = resolved ? matchupFor(resolved, playerId) : undefined;
     if (current && (!storage.data.lastMatch || matchupKey(storage.data.lastMatch) !== matchupKey(current))) {
       storage.data.lastMatch = current; storage.save();
     }
     context.textContent = active ? state.match.status === 'finished' ? 'LAST MATCH' : 'CURRENT MATCH' : 'LAST MATCH';
     if (active && !current) {
-      context.textContent = 'Notes need a 1v1 match, a map, known races and your player.';
+      context.textContent = matchupProblem(resolved!, playerId) || '';
       show();
+      heading.textContent = state.match.map?.trim() || 'Matchup notes';
     } else {
       if (!active && !storage.data.lastMatch) context.textContent = 'Play a match to start your notebook.';
       show(current || storage.data.lastMatch);
     }
   }
 
-  view.append(context, heading, perspective, editor, status);
+  view.append(context, heading, perspective, raceChoices, editor, status);
   if (storage.data.previousNotes) {
     const previous = element('details'); previous.append(element('summary', 'Notes from the previous version'));
     const text = element('textarea'); text.readOnly = true; text.value = storage.data.previousNotes; text.setAttribute('aria-label', 'Previous notes');

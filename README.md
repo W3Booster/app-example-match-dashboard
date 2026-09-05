@@ -4,6 +4,8 @@ One idea: **write a note for the current matchup; show it automatically next tim
 
 During or after a 1v1 game, select **Create matchup notes** and type into one free-form field. The races and map come from the game. When another game starts with the same matchup on the same map, its note opens automatically. The last matchup stays available after the game ends, including after reloading the app.
 
+Games against the computer work too. If a race is hidden or reported as Random, choose its actual race in the notebook; this choice lasts for the current game. If your player cannot be detected, choose your player. No manual setup is needed when the game supplies both races and your player. Try the **computer random** demo scenario to see this fallback.
+
 [Demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer guide](https://website.w3booster.com/developer/first-app/) · [All examples](https://website.w3booster.com/developer/examples/)
 
 ## Run

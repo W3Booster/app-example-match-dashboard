@@ -30,6 +30,9 @@ header { justify-content: space-between; border-bottom: 1px solid var(--border);
 .content { margin: 22px 0; }
 .notebook { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 8px; padding: 24px; }
 .note-editor { margin-top: 20px; }
+.race-choices { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
+.race-choices:empty { display: none; }
+.race-choices label { display: flex; align-items: center; gap: 8px; }
 .note-editor label { font-size: 13px; }
 .privacy { margin: 22px 0 0; }
 .notice:empty, [hidden] { display: none !important; }

@@ -1,9 +1,11 @@
 import { createDemoState } from '@w3booster/sdk/testing';
 
-export const scenarios = ['match', 'no-match', 'missing-data', 'teams', 'observer', 'unknown-race', 'night-elf', 'finished'] as const;
+export const scenarios = ['match', 'computer', 'computer-random', 'missing-player', 'no-match', 'missing-data', 'teams', 'observer', 'unknown-race', 'night-elf', 'finished'] as const;
 export function scenarioState(name: string) {
   const fixture = createDemoState();
   const state = { ...fixture, match: { ...fixture.match, gameTime: 872 } };
+  if (name === 'computer' || name === 'computer-random') return { ...state, players: state.players.map((p, i) => ({ ...p, isAI: i === 1, ...(i === 1 ? { name: 'Computer (Normal)', race: name === 'computer-random' ? 'random' : 'orc' } : {}) })) };
+  if (name === 'missing-player') return { ...state, match: { ...state.match, broadcasterPlayerId: 'missing' } };
   if (name === 'night-elf') return { ...state, players: state.players.map((p, i) => ({ ...p, race: i === 0 ? 'night-elf' : 'undead' })) };
   if (name === 'observer') return { ...state, match: { ...state.match, isObserver: true } };
   if (name === 'unknown-race') return { ...state, players: state.players.map(({ race: _race, ...player }) => player) };

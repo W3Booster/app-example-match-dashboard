@@ -57,7 +57,8 @@ runtime.lifecycle.subscribe(snapshot => {
     : `${snapshot.status}${snapshot.retry ? ` · attempt ${snapshot.retry.attempt}` : ''}`;
   document.body.dataset.connection = snapshot.status;
   document.body.dataset.synchronized = String(snapshot.isSynchronized);
-  details.textContent = JSON.stringify({ mode: demo ? 'demo' : 'live', status: snapshot.status, synchronized: snapshot.isSynchronized, match: snapshot.state?.match.status, dataCapabilities: snapshot.state?.capabilities || [], host: snapshot.host, definitionRevision: w3boosterApp.revision }, null, 2);
+  const state = snapshot.state;
+  details.textContent = JSON.stringify({ mode: demo ? 'demo' : 'live', status: snapshot.status, synchronized: snapshot.isSynchronized, match: state && { status: state.match.status, mode: state.match.mode, map: state.match.map, broadcasterPlayerId: state.match.broadcasterPlayerId, isObserver: state.match.isObserver, isReplay: state.match.isReplay }, players: state?.players.map(({ id, race, team, isAI }) => ({ id, race, team, isAI })), dataCapabilities: state?.capabilities || [], host: snapshot.host, definitionRevision: w3boosterApp.revision }, null, 2);
 }, { signal });
 runtime.client.on('issue', issue => { feedback.textContent = `A recoverable ${issue.source} issue occurred. See the browser console.`; console.warn(issue.source, issue.error); }, { signal });
 try { await runtime.start(); }

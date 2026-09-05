@@ -1,6 +1,6 @@
 {
   "name": "Match Notebook",
-  "description": "Prepare 1v1 plans by your race, opponent race and map. Keep scouting cues, responses and lessons together, find matching advice, and attach supporting matches. Private browser-local notes with export/import.",
+  "description": "Write a free-form note during or after a 1v1 game. Your note opens automatically next time the same races meet on the same map. Saved in this browser.",
   "surfaces": [
     "application"
   ],

@@ -1,14 +1,14 @@
 # Match Notebook
 
-A focused W3Booster example: reusable 1v1 preparation by **your race → opponent race → map**. Keep a game plan, scouting cues, responses and lessons together. This is intentionally **application-only**: writing and reviewing plans belongs in a proper window, not over the game.
+One idea: **write a note for the current matchup; show it automatically next time.**
 
-[Try the demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://website.w3booster.com/developer/examples/)
+During or after a 1v1 game, select **Create matchup notes** and type into one free-form field. The races and map come from the game. When another game starts with the same matchup on the same map, its note opens automatically. The last matchup stays available after the game ends, including after reloading the app.
 
-The repository URL remains `app-example-match-dashboard` so existing links and installations survive the workflow redesign.
+[Demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer guide](https://website.w3booster.com/developer/first-app/) · [All examples](https://website.w3booster.com/developer/examples/)
 
-## Run in one minute
+## Run
 
-Node.js 22.22.3 or newer. Demo mode needs no account, Warcraft III, desktop client, or database.
+Use Node.js 22.22.3 or newer. No account or running game is needed for the demo.
 
 ```sh
 git clone https://github.com/W3Booster/app-example-match-dashboard.git
@@ -17,76 +17,39 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:5173/**. Expect **DEMO DATA** and **Connected · synchronized**. Edit **[src/notebook.ts](src/notebook.ts)** and watch the UI reload. Startup and teardown are in **[src/main.ts](src/main.ts)**; appearance is in **[src/notebook.css](src/notebook.css)**.
+Open **http://localhost:5173/**. Create a note, switch the demo scenario to **no match**, then back to **match**: your note remains available and reopens without a click.
 
-## Try the actual workflow
+## Read the example
 
-1. Choose **New matchup plan**, even without a running match. Set your race and the opponent's race; leave the map blank for **Any map** advice.
-2. Write a **Game plan**, **Scouting cues**, **Responses**, **Mistakes to avoid**, and optional **Free-form notes**. Changes save as you type.
-3. Start the demo match: relevant plans appear above the library, map-specific first and general advice next. **New plan for this matchup** prefills the races and map but never creates notes automatically.
-4. **Attach current match** to a matching plan. Add a takeaway after the game. A repeated capture updates the same snapshot without replacing the plan; a plan can support many matches.
-5. Search races, maps and note text. **Copy plan** shares a readable summary (with a manual clipboard fallback). **Export notebook** downloads a private JSON backup; **Import notebook** merges it without overwriting existing plans. Reimporting identical content does not duplicate it; conflicting versions remain separate.
+- [src/notebook.ts](src/notebook.ts): receive match updates, open the matching note, save typing. This is the example's main idea.
+- [src/notebook-model.ts](src/notebook-model.ts): identify the two races and map. Matching is directional and ignores only map-name casing and surrounding whitespace.
+- [src/notebook-storage.ts](src/notebook-storage.ts): browser-local persistence. The migration helper only preserves earlier versions of this published example; new projects don't need it.
+- [src/main.ts](src/main.ts): SDK startup, connection status and cleanup.
+- [src/notebook.css](src/notebook.css): compact W3Booster-style dark surfaces with a green accent.
 
-The notebook keeps up to 100 plans, each with 20 supporting snapshots and 8,000 characters per writing field. It uses browser-local storage with separate demo/live stores. It is not cloud-synced, account-isolated, automatic match history, or replay analysis. Anyone using this browser profile can access its notes. Clearing browser data removes them; export important notes first. Backups contain notes and captured player names—keep them private. File import/export uses ordinary user-initiated browser uploads/downloads, not arbitrary filesystem access.
+No plan builder, snapshot collection, search, import/export, general-map advice or overlay. This is a small starting point, not a complete notes product. Observers choose a player; incomplete data and team games do not create misleading 1v1 notes. Live ticks never replace the text field while typing.
 
-### Matching, safety and migration
+Notes stay in the current browser profile, separately for demo/live. They are not cloud-synced or account-isolated. Clearing browser data removes them. Failed saves are shown explicitly; copy your text before closing if saving fails. Existing structured notes are flattened into text, and original storage is left untouched. Older notes without an exact matchup are available in a collapsed recovery panel, only for users who had them.
 
-- Suggestions require synchronized **1v1** data, two players, known races and a selected perspective. Team games and unresolved/random races do not receive misleading recommendations. A known non-observer broadcaster is selected initially; observers explicitly choose a player. You can switch sides at any time.
-- Map matching ignores case and surrounding whitespace, but does not guess aliases or conflate map versions. Blank means **Any map**. Notes for Human vs Orc never silently become advice for Orc vs Human.
-- No-match, disconnected and stale sessions still allow manual preparation; they cannot attach a stale match. Finished matches remain explicitly labeled. Live clock updates never remount a text editor.
-- Retired snapshot notes migrate once into unclassified plans, preserving all notes and supporting snapshots. Assign their races yourself; the app cannot infer whose perspective an old note represents. The original storage key remains untouched, and the new store uses `:v2`.
-- Malformed storage is never silently overwritten. Storage failures show a persistent warning and leave session edits available to export. Import validates the whole file (version, fields, limits and identities) before changing anything; files larger than 2 MB are rejected. Deletion and merging require confirmation.
-- If another window changes the same notebook, saving pauses instead of overwriting it. Export your edits, reload the other version, then import to merge. The 2 MB notebook limit is checked before accepting edits so exported notebooks remain importable.
+## Connect your fork
 
-The pure data model is in [src/notebook-model.ts](src/notebook-model.ts), with migration, validation and merge tests in [scripts/notebook-model.test.mjs](scripts/notebook-model.test.mjs). The UI and SDK integration live in [src/notebook.ts](src/notebook.ts).
+1. Enable Developer Mode in W3Booster and create an app using [app-definition.json](app-definition.json).
+2. Register **Application only** at `http://localhost:5173/?demo=0`, with `match:read` and `players:read`. No settings or overlay URLs are needed.
+3. Run `npm run app:fork -- YOUR_NEW_CLIENT_ID`, then use **Test locally** in W3Booster. A source clone does not inherit the official app's authorization.
 
-## Surfaces and minimum permissions
-
-Register only **Application** at `http://localhost:5173/?demo=0`. No overlay URLs or unused settings are needed.
-
-Data scopes: `match:read`, `players:read`. There are no unrelated data permissions. The app-definition file is the registration guide; `example.json` and the tested build manifest declare the same surfaces.
-
-The host's overlay switches are deliberately absent for this app.
-
-## Fork and use live data
-
-The checked-in binding identifies the official example. Cloning source does **not** grant ownership or live access.
-
-1. Enable Developer Mode in W3Booster and create your own application.
-2. Use [app-definition.json](app-definition.json) for the exact surfaces, scopes, and settings schema. Supply your own name and hosted URLs.
-3. Replace the official binding safely:
-
-   ```sh
-   npm run app:fork -- YOUR_NEW_CLIENT_ID
-   npm run check
-   ```
-
-4. Use **Test locally** with the configured surface URLs above, then launch through W3Booster. Commit the new binding and package configuration.
-
-Direct visits default to offline demo data. Registered live URLs must include `demo=0`. Failed authorization never silently falls back to synthetic data. The application runs with browser APIs and the SDK; it has no arbitrary shell or filesystem access.
+Failed live authorization never falls back to demo data. After changing a registered contract, use `npm run w3booster:sync`; `npm run w3booster:check` verifies the binding. See the [first-app guide](https://website.w3booster.com/developer/first-app/) for details.
 
 ## Verify and publish
 
 ```sh
-npm run check
 npm run build
 npx playwright install chromium
 npm run test:browser
 npm run screenshots
 ```
 
-Tests exercise the real workflow, minimal scopes, configured surfaces, mobile layout, demo/live isolation, and authorization failures. Screenshots capture the real UI, not a mockup.
+Tests cover actual start/end events, automatic note reopening, last-game editing, persistence, migration, mobile layout and authorization. GitHub Actions checks the app and deploys `dist/` to Pages. In a fork, enable Pages via GitHub Actions and replace the official URLs. Keep credentials and real private notes out of source and screenshots.
 
-![Match Notebook: actual runnable interface](docs/screenshot.png)
+![Match Notebook: a single free-form matchup note](docs/screenshot.png)
 
-The included GitHub Actions workflow checks the project and deploys `dist/` to Pages. Enable **Settings → Pages → GitHub Actions** in your fork and replace the official URLs. The build uses the checked-in SDK lockfile and does not fetch private data. Its `example-bindings.json` records the binding actually compiled and the tested supported surfaces.
-
-After editing your registered contract, run `npm run w3booster:sync`; `npm run w3booster:check` verifies the current public definition. Never put credentials or real user captures into the repository or Pages secrets.
-
-For a complete Angular starting point, [build from Match Vision](https://website.w3booster.com/developer/match-vision/). All examples remain together in the [example library](https://website.w3booster.com/developer/examples/).
-
-MIT licensed; retain [LICENSE](LICENSE) when reusing source. No Warcraft artwork is bundled.
-
-## Shared game context
-
-This example uses SDK 1.1.0. Shared HUD scale, chat-input visibility, and team-color mode are available through `gameContext(state)` from `@w3booster/sdk/selectors`, without an additional scope. Request only the match/player data this app consumes. App-specific values belong in `state.application.data`; Match Vision’s score is not shared game context.
+MIT licensed; retain [LICENSE](LICENSE). The stable repository name and client ID preserve existing installations. For a complete production starting point, see [Match Vision](https://website.w3booster.com/developer/match-vision/).

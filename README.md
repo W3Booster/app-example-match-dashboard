@@ -2,7 +2,9 @@
 
 One idea: **write a note for the current matchup; show it automatically next time.**
 
-During or after a 1v1 game, select **Create matchup notes** and type into one free-form field. The races and map come from the game. When another game starts with the same matchup on the same map, its note opens automatically. The last matchup stays available after the game ends, including after reloading the app.
+Choose any of the 16 race matchups, including mirror matches, and select **Create matchup notes**. **All maps** is the default: these notes open whenever the same races meet. Choose the current map or a previously saved map for separate, map-specific advice. Existing map notes remain available in the map selector.
+
+You can browse and write notes before playing. A new 1v1 game opens the detected matchup’s general notes automatically. Browsing another matchup or map stays in place while the current game updates. The last matchup stays available after the game ends, including after reloading the app.
 
 Games against the computer work too. If a race is hidden or reported as Random, choose its actual race in the notebook; this choice lasts for the current game. If your player cannot be detected, choose your player. No manual setup is needed when the game supplies both races and your player. Try the **computer random** demo scenario to see this fallback.
 
@@ -24,12 +26,12 @@ Open **http://localhost:5173/**. Create a note, switch the demo scenario to **no
 ## Read the example
 
 - [src/notebook.ts](src/notebook.ts): receive match updates, open the matching note, save typing. This is the example's main idea.
-- [src/notebook-model.ts](src/notebook-model.ts): identify the two races and map. Matching is directional and ignores only map-name casing and surrounding whitespace.
+- [src/notebook-model.ts](src/notebook-model.ts): identify the two races and map. Matching is directional; an empty map represents general notes. Specific maps ignore casing and surrounding whitespace.
 - [src/notebook-storage.ts](src/notebook-storage.ts): browser-local persistence. The migration helper only preserves earlier versions of this published example; new projects don't need it.
 - [src/main.ts](src/main.ts): SDK startup, connection status and cleanup.
 - [src/notebook.css](src/notebook.css): compact W3Booster-style dark surfaces with a green accent.
 
-No plan builder, snapshot collection, search, import/export, general-map advice or overlay. This is a small starting point, not a complete notes product. Observers choose a player; incomplete data and team games do not create misleading 1v1 notes. Live ticks never replace the text field while typing.
+No plan builder, snapshot collection, search, import/export or overlay. This is a small starting point, not a complete notes product. Observers choose a player; incomplete data and team games do not create misleading 1v1 notes. Live ticks never replace the text field while typing.
 
 Notes stay in the current browser profile, separately for demo/live. They are not cloud-synced or account-isolated. Clearing browser data removes them. Failed saves are shown explicitly; copy your text before closing if saving fails. Existing structured notes are flattened into text, and original storage is left untouched. Older notes without an exact matchup are available in a collapsed recovery panel, only for users who had them.
 
@@ -50,7 +52,7 @@ npm run test:browser
 npm run screenshots
 ```
 
-Tests cover actual start/end events, automatic note reopening, last-game editing, persistence, migration, mobile layout and authorization. GitHub Actions checks the app and deploys `dist/` to Pages. In a fork, enable Pages via GitHub Actions and replace the official URLs. Keep credentials and real private notes out of source and screenshots.
+Tests cover all 16 matchups, notes across maps, separate map advice, preserved existing notes, actual start/end events, automatic note reopening, manual browsing while typing, persistence, migration, mobile layout and authorization. GitHub Actions checks the app and deploys `dist/` to Pages. In a fork, enable Pages via GitHub Actions and replace the official URLs. Keep credentials and real private notes out of source and screenshots.
 
 ![Match Notebook: a single free-form matchup note](docs/screenshot.png)
 

@@ -29,6 +29,9 @@ header { justify-content: space-between; border-bottom: 1px solid var(--border);
 .source-link { margin-left: auto; }
 .content { margin: 22px 0; }
 .notebook { background: var(--surface); border: 1px solid var(--border); border-top: 3px solid var(--accent); border-radius: 8px; padding: 24px; }
+.matchup-choices { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 20px; }
+.matchup-choices label { display: flex; flex: 1 1 200px; min-width: 0; flex-direction: column; gap: 8px; }
+.matchup-choices select { width: 100%; }
 .note-editor { margin-top: 20px; }
 .race-choices { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 12px; }
 .race-choices:empty { display: none; }

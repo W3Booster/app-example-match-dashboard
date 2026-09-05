@@ -3,16 +3,16 @@ import { isMode } from '@w3booster/sdk/standard-game';
 
 export interface Matchup { ownRace: string; opponentRace: string; map: string; }
 export const races = ['human', 'orc', 'night-elf', 'undead'];
+export const matchups: Matchup[] = races.flatMap(ownRace => races.map(opponentRace => ({ ownRace, opponentRace, map: '' })));
 export const raceLabel = (race: string) => ({ human: 'Human', orc: 'Orc', 'night-elf': 'Night Elf', undead: 'Undead' })[race] || race;
 export const matchupKey = (m: Matchup) => JSON.stringify([m.ownRace, m.opponentRace, m.map.trim().toLowerCase()]);
-export const matchupTitle = (m: Matchup) => `${raceLabel(m.ownRace)} vs ${raceLabel(m.opponentRace)} · ${m.map}`;
+export const matchupTitle = (m: Matchup) => `${raceLabel(m.ownRace)} vs ${raceLabel(m.opponentRace)} · ${m.map || 'All maps'}`;
 
-// A note belongs to one directional 1v1 matchup on one exact map.
+// Empty map means advice for this directional 1v1 matchup on every map.
 export function matchupProblem(state: MatchState, playerId: string): string | undefined {
   if (!state.match.id || state.match.status === 'none') return 'Waiting for a game.';
   if (state.players.length < 2) return 'Waiting for both players. Check that player data is allowed in the app permissions.';
   if (!isMode(state.match.mode, '1v1') || state.players.length !== 2) return 'Matchup notes support 1v1 games, including games against the computer.';
-  if (!state.match.map?.trim()) return 'Waiting for the map name.';
   const own = state.players.find(p => p.id === playerId);
   const opponent = state.players.find(p => p.id !== playerId);
   if (!own || !opponent) return 'Choose your player below.';
@@ -24,5 +24,5 @@ export function matchupFor(state: MatchState, playerId: string): Matchup | undef
   if (matchupProblem(state, playerId)) return;
   const own = state.players.find(p => p.id === playerId)!;
   const opponent = state.players.find(p => p.id !== playerId)!;
-  return { ownRace: own.race!, opponentRace: opponent.race!, map: state.match.map!.trim() };
+  return { ownRace: own.race!, opponentRace: opponent.race!, map: state.match.map?.trim() || '' };
 }

@@ -16,7 +16,14 @@ try {
   const base = 'http://127.0.0.1:' + server.httpServer.address().port;
   const open = async scenario => { await page.goto(base + '/?capture=1&scenario=' + scenario); await page.waitForSelector('body[data-synchronized="true"]'); };
   await open('no-match');
-  assert.equal(await page.locator('.note-editor textarea, .note-editor button').count(), 0);
+  assert.equal(await page.getByLabel('Matchup', { exact: true }).locator('option:not([disabled])').count(), 16);
+  assert.equal(await page.getByLabel('Map', { exact: true }).inputValue(), '');
+  await page.getByLabel('Matchup', { exact: true }).selectOption(JSON.stringify(['undead', 'night-elf', '']));
+  await page.getByRole('button', { name: 'Create matchup notes' }).click();
+  await page.getByLabel('Matchup notes', { exact: true }).fill('Plan before playing any games.');
+  await page.getByLabel('Matchup', { exact: true }).selectOption(JSON.stringify(['human', 'human', '']));
+  await page.getByLabel('Matchup', { exact: true }).selectOption(JSON.stringify(['undead', 'night-elf', '']));
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Plan before playing any games.');
   await open('finished');
   await page.getByRole('button', { name: 'Create matchup notes' }).click();
   await page.getByLabel('Matchup notes', { exact: true }).fill('Scout before committing.\nKeep the first push short.');
@@ -69,7 +76,7 @@ try {
   assert.equal(await page.evaluate(() => getComputedStyle(document.documentElement).backgroundColor), 'rgb(11, 13, 16)');
   await page.goto(base + '/?demo=0');
   await page.getByText(/Opening localhost directly does not authorize|Could not start/).first().waitFor();
-  assert.equal(await page.locator('.note-editor textarea, .note-editor button').count(), 0, 'demo does not become live notes');
+  assert.equal(await page.locator('.note-editor textarea').count(), 0, 'demo does not become live notes');
 
   // A live launch must negotiate the current protocol, independently of demo fixtures.
   let requestedProtocols;
@@ -82,7 +89,7 @@ try {
   await page.goto(base + '/?demo=0');
   await page.getByText('Match Notebook needs a matching app and W3Booster update before it can connect.', { exact: true }).waitFor();
   assert.deepEqual(requestedProtocols, ['2.0']);
-  assert.equal(await page.locator('.note-editor textarea, .note-editor button').count(), 0);
+  assert.equal(await page.locator('.note-editor textarea').count(), 0);
   await page.unroute('**/stream/v1/stream-tickets');
 
   // Exercise actual start/end events without reloading or adding hooks to the app.
@@ -110,12 +117,28 @@ try {
   await page.evaluate(() => window.deliver('no-match'));
   await page.getByLabel('Matchup notes', { exact: true }).fill('Written after the game');
   await page.evaluate(() => window.deliver('match', { id: 'different-map', map: 'Autumn Leaves' }));
-  assert.equal(await page.getByRole('button', { name: 'Create matchup notes' }).count(), 1);
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Written after the game');
+  await page.getByLabel('Map', { exact: true }).selectOption('autumn leaves');
+  await page.getByRole('button', { name: 'Create matchup notes' }).click();
+  await page.getByLabel('Matchup notes', { exact: true }).fill('Autumn Leaves only.');
+  await page.evaluate(() => window.deliver('match', { id: 'different-map', map: 'Autumn Leaves', gameTime: 901 }));
+  assert.ok(await page.getByLabel('Matchup notes', { exact: true }).evaluate(el => el === document.activeElement));
+  await page.getByLabel('Map', { exact: true }).selectOption('');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Written after the game');
+  await page.getByLabel('Map', { exact: true }).selectOption('autumn leaves');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Autumn Leaves only.');
+  await page.getByLabel('Matchup', { exact: true }).selectOption(JSON.stringify(['orc', 'human', '']));
+  await page.getByRole('button', { name: 'Create matchup notes' }).click();
+  await page.getByLabel('Matchup notes', { exact: true }).fill('Manual browsing stays open.');
+  await page.evaluate(() => window.deliver('match', { id: 'different-map', map: 'Autumn Leaves', gameTime: 902 }));
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Manual browsing stays open.');
+  assert.ok(await page.getByLabel('Matchup notes', { exact: true }).evaluate(el => el === document.activeElement));
   await page.evaluate(() => window.deliver('match', { id: 'new-match-same-map' }));
+  assert.equal(await page.getByLabel('Map', { exact: true }).inputValue(), '');
   assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Written after the game');
   await page.evaluate(() => window.deliver('match', { id: 'stale-map', map: 'Do not use stale data' }, false));
   await page.getByText('LAST MATCH', { exact: true }).waitFor();
-  assert.match(await page.locator('h2').textContent(), /Echo Isles/);
+  assert.match(await page.locator('h2').textContent(), /All maps/);
   await page.evaluate(() => window.deliver('computer-random', { id: 'random-ai' }));
   await page.getByLabel('Opponent race', { exact: true }).selectOption('orc');
   await page.getByLabel('Matchup notes', { exact: true }).fill('Live AI notes');
@@ -136,7 +159,35 @@ try {
     const { migrateNotes } = await import('/src/notebook-storage.ts');
     const data = migrateNotes(localStorage.getItem('match-notebook:event-test:demo:v2'), null);
     if (!Object.values(data.notes)[0].includes('Old notes') || !Object.values(data.notes)[0].includes('Old cues')) throw Error('Migration lost text');
+    const previous = JSON.parse(localStorage.getItem('match-notebook:event-test:demo:v2'));
+    previous.plans.push({ ...previous.plans[0], map: '', notes: 'Old general advice' });
+    const migrated = migrateNotes(JSON.stringify(previous), null);
+    if (!migrated.notes[JSON.stringify(['human', 'orc', ''])].includes('Old general advice')) throw Error('Migration lost general advice');
+    if (!migrated.notes[JSON.stringify(['human', 'orc', 'echo isles'])].includes('Old notes')) throw Error('Migration merged map advice');
   });
+  // Existing v3 map notes remain separate and reachable; new notes default to all maps.
+  await open('match');
+  await page.evaluate(() => {
+    const key = `match-notebook:${document.body.dataset.application}:demo:v3`;
+    localStorage.setItem(key, JSON.stringify({ version: 3, notes: {
+      [JSON.stringify(['human', 'orc', 'echo isles'])]: 'Existing map advice',
+      [JSON.stringify(['undead', 'night-elf', 'last refuge'])]: 'Another saved matchup',
+    }, lastMatch: { ownRace: 'human', opponentRace: 'orc', map: 'Echo Isles' }, previousNotes: '' }));
+  });
+  await open('no-match');
+  assert.equal(await page.getByLabel('Map', { exact: true }).inputValue(), '');
+  await page.getByRole('button', { name: 'Create matchup notes' }).click();
+  await page.getByLabel('Matchup notes', { exact: true }).fill('General advice');
+  await page.getByLabel('Map', { exact: true }).selectOption('echo isles');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Existing map advice');
+  await page.getByLabel('Matchup', { exact: true }).selectOption(JSON.stringify(['undead', 'night-elf', '']));
+  assert.equal(await page.getByLabel('Map', { exact: true }).inputValue(), '');
+  await page.getByLabel('Map', { exact: true }).selectOption('last refuge');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Another saved matchup');
+  await open('match');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'General advice');
+  await page.getByLabel('Map', { exact: true }).selectOption('echo isles');
+  assert.equal(await page.getByLabel('Matchup notes', { exact: true }).inputValue(), 'Existing map advice');
   assert.deepEqual(errors, []);
-  console.log('Simple notebook: current/last match, automatic reopening, exact map, typing, persistence, migration, dark/mobile UI and demo isolation passed.');
+  console.log('Notebook: all matchups, general and map-specific notes, live selection, persistence, existing notes, migration, mobile UI and demo isolation passed.');
 } finally { await dev?.close(); await browser.close(); await new Promise(resolve => server.httpServer.close(resolve)); }

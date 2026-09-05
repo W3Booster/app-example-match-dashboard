@@ -1,7 +1,7 @@
 import type { ApplicationRuntime } from '@w3booster/sdk/app';
 import type { Race } from '@w3booster/sdk';
 import { element } from './ui';
-import { matchupFor, matchupProblem, matchupKey, matchupTitle, races, raceLabel, type Matchup } from './notebook-model';
+import { matchupFor, matchupProblem, matchupKey, matchupTitle, matchups, races, raceLabel, type Matchup } from './notebook-model';
 import { isMode } from '@w3booster/sdk/standard-game';
 import { openNotes } from './notebook-storage';
 
@@ -16,6 +16,59 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
   const editor = element('div', '', 'note-editor');
   let shownKey = '', selectedPlayer = '', matchId = '', playerOptions = '';
   let raceOptions = '';
+  let manualMatchup: Matchup | undefined;
+  const browse = element('div', '', 'matchup-choices');
+  const matchupSelect = element('select'); matchupSelect.setAttribute('aria-label', 'Matchup');
+  const prompt = element('option', 'Choose matchup'); prompt.value = ''; prompt.disabled = true; matchupSelect.append(prompt);
+  for (const matchup of matchups) {
+    const option = element('option', `${raceLabel(matchup.ownRace)} vs ${raceLabel(matchup.opponentRace)}`);
+    option.value = matchupKey(matchup); matchupSelect.append(option);
+  }
+  const mapSelect = element('select'); mapSelect.setAttribute('aria-label', 'Map');
+  const matchupLabel = element('label', 'Matchup'); matchupLabel.append(matchupSelect);
+  const mapLabel = element('label', 'Map'); mapLabel.append(mapSelect);
+  browse.append(matchupLabel, mapLabel);
+  matchupSelect.addEventListener('change', () => {
+    manualMatchup = matchups.find(m => matchupKey(m) === matchupSelect.value);
+    update();
+  }, { signal });
+  mapSelect.addEventListener('change', () => {
+    const matchup = matchups.find(m => matchupKey(m) === matchupSelect.value);
+    if (matchup) manualMatchup = { ...matchup, map: mapSelect.value };
+    update();
+  }, { signal });
+
+  function updateChoices(matchup?: Matchup, current?: Matchup) {
+    for (const option of matchupSelect.options) {
+      const candidate = matchups.find(m => matchupKey(m) === option.value);
+      if (!candidate) continue;
+      const count = Object.keys(storage.data.notes).filter(key => {
+        const [ownRace, opponentRace] = JSON.parse(key);
+        return ownRace === candidate.ownRace && opponentRace === candidate.opponentRace;
+      }).length;
+      option.textContent = `${raceLabel(candidate.ownRace)} vs ${raceLabel(candidate.opponentRace)}${count ? ` · ${count} ${count === 1 ? 'note' : 'notes'}` : ''}`;
+    }
+    matchupSelect.value = matchup ? matchupKey({ ...matchup, map: '' }) : '';
+    const maps = new Map<string, string>();
+    // Preserve the labels of saved maps and offer the detected map as well.
+    for (const key of Object.keys(storage.data.notes)) {
+      const [ownRace, opponentRace, map] = JSON.parse(key);
+      if (map && ownRace === matchup?.ownRace && opponentRace === matchup?.opponentRace) maps.set(map.trim().toLowerCase(), map);
+    }
+    for (const candidate of [storage.data.lastMatch, current, matchup]) {
+      if (candidate?.map) maps.set(candidate.map.toLowerCase(), candidate.map);
+    }
+    const options = [['', 'All maps'], ...[...maps.entries()].sort((a, b) => a[1].localeCompare(b[1]))];
+    const signature = JSON.stringify(options);
+    if (mapSelect.dataset.options !== signature) {
+      mapSelect.dataset.options = signature;
+      mapSelect.replaceChildren(...options.map(([value, title]) => {
+        const option = element('option', title); option.value = value; return option;
+      }));
+    }
+    mapSelect.value = matchup?.map.toLowerCase() || '';
+    mapSelect.disabled = !matchup;
+  }
   let selectedRaces: Record<string, Race | undefined> = {};
 
   function show(matchup?: Matchup) {
@@ -28,7 +81,7 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
     if (storage.data.notes[key] === undefined) {
       const create = element('button', 'Create matchup notes');
       create.addEventListener('click', () => {
-        storage.data.notes[key] = ''; storage.save(); shownKey = ''; show(matchup);
+        storage.data.notes[key] = ''; storage.save(); shownKey = ''; update();
         editor.querySelector('textarea')?.focus();
       }, { signal });
       editor.append(element('p', 'No notes for this matchup yet.'), create);
@@ -45,7 +98,7 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
   function update() {
     const snapshot = runtime.lifecycle.get(), state = snapshot.state;
     const active = snapshot.isSynchronized && state && state.match.status !== 'none';
-    if (active && state.match.id !== matchId) { matchId = state.match.id; selectedPlayer = ''; selectedRaces = {}; }
+    if (active && state.match.id !== matchId) { matchId = state.match.id; selectedPlayer = ''; selectedRaces = {}; manualMatchup = undefined; }
     const detectedPlayer = state?.players.find(p => p.id === state.match.broadcasterPlayerId);
     const playerId = selectedPlayer || (state?.match.isObserver || state?.match.isReplay ? '' : detectedPlayer?.id || '');
     const choices = active && (state.match.isObserver || state.match.isReplay || !detectedPlayer) ? JSON.stringify([state.match.id, state.players.map(p => [p.id, p.name])]) : '';
@@ -83,23 +136,21 @@ export function notebook(runtime: ApplicationRuntime<any>, demo: boolean, signal
       storage.data.lastMatch = current; storage.save();
     }
     context.textContent = active ? state.match.status === 'finished' ? 'LAST MATCH' : 'CURRENT MATCH' : 'LAST MATCH';
-    if (active && !current) {
-      context.textContent = matchupProblem(resolved!, playerId) || '';
-      show();
-      heading.textContent = state.match.map?.trim() || 'Matchup notes';
-    } else {
-      if (!active && !storage.data.lastMatch) context.textContent = 'Play a match to start your notebook.';
-      show(current || storage.data.lastMatch);
-    }
+    const automatic = current || (!active ? storage.data.lastMatch : undefined);
+    const shown = manualMatchup || (automatic ? { ...automatic, map: '' } : !active ? matchups[0] : undefined);
+    if (manualMatchup) context.textContent = 'YOUR NOTEBOOK';
+    else if (active && !current) context.textContent = matchupProblem(resolved!, playerId) || '';
+    else if (!active && !storage.data.lastMatch) context.textContent = 'Choose a matchup to start your notebook.';
+    updateChoices(shown, current);
+    show(shown);
   }
 
-  view.append(context, heading, perspective, raceChoices, editor, status);
+  view.append(context, heading, perspective, raceChoices, browse, editor, status);
   if (storage.data.previousNotes) {
     const previous = element('details'); previous.append(element('summary', 'Notes from the previous version'));
     const text = element('textarea'); text.readOnly = true; text.value = storage.data.previousNotes; text.setAttribute('aria-label', 'Previous notes');
     previous.append(element('p', 'These notes had no exact matchup. Their text is kept here so you can copy it.'), text); view.append(previous);
   }
-  view.append(element('p', 'Notes stay in this browser. Demo and live notes are separate.', 'privacy'));
   runtime.lifecycle.subscribe(update, { signal }); update();
   return view;
 }

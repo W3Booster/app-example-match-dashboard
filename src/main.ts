@@ -7,7 +7,7 @@ import { element } from './ui';
 const query = new URLSearchParams(location.search);
 document.body.dataset.application = w3boosterApp.clientId;
 // One repository, one app.
-const presentation = { brand: 'MATCH NOTEBOOK', title: 'Matchup notes', description: 'Write a note during or after a game. It opens automatically next time the same races meet on this map.' };
+const presentation = { brand: 'MATCH NOTEBOOK', title: 'Matchup notes', description: 'Keep notes for any matchup. They open automatically when those races meet, on any map. Choose a map for more specific advice.' };
 document.title = presentation.brand + ' · W3Booster Examples';
 // Direct visits start offline; registered W3Booster URLs explicitly select demo=0.
 const demo = query.get('demo') !== '0';

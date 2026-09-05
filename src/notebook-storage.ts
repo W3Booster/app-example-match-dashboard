@@ -7,9 +7,9 @@ export function parseNotes(raw: string): SavedNotes {
   if (data?.version !== 3 || !data.notes || typeof data.notes !== 'object' || Array.isArray(data.notes) || typeof data.previousNotes !== 'string') throw Error('Unreadable notes');
   for (const [key, text] of Object.entries(data.notes)) {
     const parts = JSON.parse(key);
-    if (!Array.isArray(parts) || parts.length !== 3 || !races.includes(parts[0]) || !races.includes(parts[1]) || typeof parts[2] !== 'string' || !parts[2].trim() || typeof text !== 'string') throw Error('Unreadable note');
+    if (!Array.isArray(parts) || parts.length !== 3 || !races.includes(parts[0]) || !races.includes(parts[1]) || typeof parts[2] !== 'string' || typeof text !== 'string') throw Error('Unreadable note');
   }
-  if (data.lastMatch && (!races.includes(data.lastMatch.ownRace) || !races.includes(data.lastMatch.opponentRace) || typeof data.lastMatch.map !== 'string' || !data.lastMatch.map.trim())) throw Error('Unreadable last matchup');
+  if (data.lastMatch && (!races.includes(data.lastMatch.ownRace) || !races.includes(data.lastMatch.opponentRace) || typeof data.lastMatch.map !== 'string')) throw Error('Unreadable last matchup');
   return data;
 }
 
@@ -27,7 +27,7 @@ export function migrateNotes(v2: string | null, v1: string | null): SavedNotes {
         return plan[key] ? `${label}\n${plan[key]}` : '';
       }).filter(Boolean).join('\n\n');
       if (typeof plan.map !== 'string') throw Error('Unreadable previous map');
-      if (races.includes(plan.ownRace) && races.includes(plan.opponentRace) && plan.map.trim()) {
+      if (races.includes(plan.ownRace) && races.includes(plan.opponentRace)) {
         const key = matchupKey(plan);
         result.notes[key] = [result.notes[key], text].filter(Boolean).join('\n\n');
       } else if (text) result.previousNotes += `${plan.map || 'Any map'}\n${text}\n\n`;
@@ -60,7 +60,7 @@ export function openNotes(base: string, status: HTMLElement) {
       }
       const next = JSON.stringify(data);
       localStorage.setItem(key, next); saved = next;
-      status.textContent = 'Saved in this browser.';
+      status.textContent = 'Saved.';
     } catch { status.textContent = 'Could not save. Copy your text before closing.'; }
   } };
 }

@@ -1,6 +1,6 @@
 {
   "name": "Match Notebook",
-  "description": "Write a free-form note during or after a 1v1 game. Your note opens automatically next time the same races meet on the same map. Saved in this browser.",
+  "description": "Keep notes for all 16 race matchups. General notes open automatically whenever those races meet, on any map. Choose a map for more specific advice.",
   "surfaces": [
     "application"
   ],

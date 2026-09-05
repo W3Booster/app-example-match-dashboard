@@ -6,83 +6,134 @@ import { preview } from 'vite';
 const config = JSON.parse(await readFile(new URL('../example.json', import.meta.url), 'utf8'));
 const definition = JSON.parse(await readFile(new URL('../app-definition.json', import.meta.url), 'utf8'));
 const manifest = JSON.parse(await readFile(new URL('../dist/example-bindings.json', import.meta.url), 'utf8'));
-const expected = {
-  'match-dashboard': { surfaces: ['application'], scopes: ['match:read', 'players:read'] },
-  'resource-monitor': { surfaces: ['streamOverlay', 'ingameOverlay'], scopes: ['match:read', 'players:read', 'resources:read'] },
-  'settings-playground': { surfaces: ['application', 'streamOverlay'], scopes: ['match:read'] },
-  'clean-overlay': { surfaces: ['streamOverlay', 'ingameOverlay'], scopes: ['match:read', 'players:read'] }
-}[config.slug];
-assert.deepEqual(config.surfaces, expected.surfaces);
-assert.deepEqual(definition.surfaces, expected.surfaces);
-assert.deepEqual(definition.scopes, expected.scopes);
-assert.deepEqual(manifest.examples[0].surfaces, expected.surfaces);
+assert.deepEqual(config.surfaces, ['application']);
+assert.deepEqual(definition.surfaces, ['application']);
+assert.deepEqual(definition.scopes, ['match:read', 'players:read']);
+assert.deepEqual(manifest.examples[0].surfaces, ['application']);
 const server = await preview({ preview: { host: '127.0.0.1', port: 0, strictPort: false } });
 const browser = await chromium.launch();
 try {
-  const context = await browser.newContext({ viewport: { width: 1440, height: 960 } });
+  const context = await browser.newContext({ viewport: { width: 1440, height: 1100 } });
   const page = await context.newPage();
   const errors = []; page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', dialog => dialog.accept());
   const base = 'http://127.0.0.1:' + server.httpServer.address().port;
+  const legacyKey = `match-notebook:${manifest.examples[0].clientId}:demo`, key = `${legacyKey}:v2`;
   const open = async query => { await page.goto(base + '/?' + query); await page.waitForSelector('body[data-synchronized="true"]'); };
-  await open('capture=1');
-  assert.equal(await page.locator('body').getAttribute('data-application'), manifest.examples[0].clientId);
+  await open('capture=1&scenario=no-match');
   assert.equal(await page.locator('.repository-link').getAttribute('href'), config.repository);
   assert.equal(await page.locator('.badge').textContent(), 'DEMO DATA');
-  assert.equal(await page.getByRole('button', { name: 'Open compact window' }).count(), 0);
-  if (config.slug === 'match-dashboard') {
-    await page.getByRole('button', { name: 'Keep match snapshot' }).click();
-    await page.getByRole('textbox', { name: 'Private match notes', exact: true }).fill('Opening: scout before expanding.\nPractice: spend gold before the next fight.');
-    await page.reload(); await page.waitForSelector('body[data-synchronized="true"]');
-    assert.match(await page.getByRole('textbox', { name: 'Private match notes', exact: true }).inputValue(), /scout before expanding/);
-    await page.getByRole('button', { name: 'Keep match snapshot' }).click();
-    assert.match(await page.getByRole('textbox', { name: 'Private match notes', exact: true }).inputValue(), /scout before expanding/);
-    assert.equal(await page.locator('.notebook-entry').count(), 1, 'updating a snapshot preserves the note without duplicates');
-    await context.grantPermissions(['clipboard-read', 'clipboard-write']);
-    await page.getByRole('button', { name: 'Copy match summary + notes' }).click();
-    assert.match(await page.evaluate(() => navigator.clipboard.readText()), /scout before expanding/);
-  }
-  if (config.slug === 'settings-playground') {
-    const saved = await page.locator('.synced-title').textContent();
-    await page.getByRole('textbox', { name: 'Broadcast title' }).fill('Next: the grand final');
-    assert.equal(await page.locator('.title-preview h3').textContent(), 'Next: the grand final');
-    assert.equal(await page.locator('.synced-title').textContent(), saved);
-    assert.equal(await page.getByRole('button', { name: 'Save title' }).isDisabled(), true);
-    assert.equal(await page.getByRole('button', { name: 'Take title off air' }).isDisabled(), true);
-  }
+  assert.equal(await page.locator('.notebook-entry').count(), 0, 'no automatic creation');
+  await page.getByRole('button', { name: 'New matchup plan', exact: true }).click();
+  await page.getByLabel('Your race', { exact: true }).selectOption('human');
+  await page.getByLabel('Opponent race', { exact: true }).selectOption('orc');
+  await page.getByLabel('Game plan', { exact: true }).fill('Scout before expanding.');
+  await page.getByLabel('Scouting cues', { exact: true }).fill('Check tech before committing.');
+  assert.equal(await page.getByRole('button', { name: 'Attach current match' }).isDisabled(), true);
+  await open('capture=1');
+  assert.equal(await page.locator('.suggested-plan').count(), 1, 'general plan matches next game');
+  await page.getByRole('button', { name: 'New plan for this matchup' }).click();
+  assert.equal(await page.getByLabel('Map (blank = Any map)').inputValue(), 'Echo Isles');
+  await page.getByLabel('Game plan', { exact: true }).fill('Keep the first push short; review the expansion timing.');
+  await page.getByLabel('Scouting cues', { exact: true }).fill('Check the opponent’s tech before committing.');
+  await page.getByLabel('Responses', { exact: true }).fill('Write down the response that worked after each practice game.');
+  await page.getByLabel('Mistakes to avoid', { exact: true }).fill('Do not repeat the overextension from last game.');
+  await page.getByLabel('Free-form notes', { exact: true }).fill('Next practice: improve the scouting habit, not the result.');
+  await page.getByRole('button', { name: 'Attach current match' }).click();
+  await page.getByRole('button', { name: 'Attach current match' }).click();
+  assert.equal(await page.locator('.saved-match').count(), 1, 'same match updates without duplicate');
+  assert.equal(await page.locator('.suggested-plan strong').first().textContent(), 'Echo Isles');
+  assert.equal(await page.locator('.suggested-plan strong').nth(1).textContent(), 'Any map');
+  await page.reload(); await page.waitForSelector('body[data-synchronized="true"]');
+  assert.match(await page.getByLabel('Free-form notes', { exact: true }).inputValue(), /scouting habit/);
+  await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+  await page.getByRole('button', { name: 'Copy plan', exact: true }).click();
+  assert.match(await page.evaluate(() => navigator.clipboard.readText()), /Human vs Orc · Echo Isles/);
+  await page.getByLabel('Search plans').fill('scouting habit');
+  assert.equal(await page.locator('.notebook-entry').count(), 1);
+  await page.getByLabel('Search plans').fill('no such advice');
+  assert.equal(await page.locator('.notebook-entry').count(), 0);
+  await page.getByLabel('Search plans').fill('');
   if (process.argv.includes('--screenshot')) {
     await page.evaluate(() => document.fonts.ready);
     await mkdir(new URL('../docs/', import.meta.url), { recursive: true });
-    await page.screenshot({ path: new URL('../docs/screenshot.png', import.meta.url).pathname });
+    await page.screenshot({ path: new URL('../docs/screenshot.png', import.meta.url).pathname, fullPage: true });
   }
-  for (const scenario of ['no-match', 'missing-data', 'teams', 'finished']) {
+  const downloadPromise = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'Export notebook', exact: true }).click();
+  const download = await downloadPromise;
+  const exported = await readFile(await download.path());
+  assert.equal(JSON.parse(exported).plans.length, 2);
+  await page.getByLabel('Import notebook', { exact: true }).setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: exported });
+  await page.getByText('Imported 0 new plans. Existing plans preserved.').waitFor();
+  const conflict = JSON.parse(exported); conflict.plans = [{ ...conflict.plans[0], notes: 'Conflicting imported version' }];
+  await page.getByLabel('Import notebook', { exact: true }).setInputFiles({ name: 'conflict.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(conflict)) });
+  await page.getByText('Imported 1 new plans. Existing plans preserved.').waitFor();
+  assert.equal(await page.locator('.notebook-entry').count(), 3);
+  assert.match(await page.getByLabel('Free-form notes', { exact: true }).inputValue(), /scouting habit/);
+  await page.getByLabel('Import notebook', { exact: true }).setInputFiles({ name: 'bad.json', mimeType: 'application/json', buffer: Buffer.from('{"version":2,"plans":[{}]}') });
+  await page.getByText(/Import rejected; existing plans unchanged/).waitFor();
+  assert.equal(await page.locator('.notebook-entry').count(), 3);
+  await page.getByLabel('Your perspective').selectOption('1');
+  assert.equal(await page.locator('.suggested-plan').count(), 0, 'opposite perspective does not reuse reversed advice');
+  await page.getByRole('button', { name: 'Attach current match' }).click();
+  await page.getByText(/This plan does not match/).waitFor();
+  for (const scenario of ['no-match', 'teams', 'unknown-race', 'observer', 'finished']) {
     await open('scenario=' + scenario + '&capture=1');
-    assert.ok((await page.locator('.content').textContent()).trim());
-    if (scenario === 'no-match' && config.slug === 'match-dashboard') assert.equal(await page.getByRole('button', { name: 'Keep match snapshot' }).isDisabled(), true);
-    if (scenario === 'missing-data' && config.slug === 'resource-monitor') {
-      assert.match(await page.locator('.content').textContent(), /Resource data unavailable/);
-      assert.equal(await page.locator('.resource-value.gold strong').first().textContent(), '—');
+    if (['no-match', 'teams', 'unknown-race', 'observer'].includes(scenario)) {
+      assert.equal(await page.locator('.suggested-plan').count(), 0);
+      assert.equal(await page.getByRole('button', { name: 'Attach current match' }).isDisabled(), true);
     }
-    if (scenario === 'teams' && ['resource-monitor', 'clean-overlay'].includes(config.slug)) assert.equal(await page.locator(config.slug === 'resource-monitor' ? '.resource-card' : '.broadcast-player').count(), 4);
+    if (scenario === 'observer') {
+      await page.getByLabel('Your perspective').selectOption('0');
+      assert.equal(await page.locator('.suggested-plan').count(), 3);
+    }
+    if (scenario === 'finished') await page.getByText('FINISHED MATCH', { exact: true }).waitFor();
   }
-  await page.setViewportSize({ width: 390, height: 844 }); await open('capture=1');
+  await open('');
+  await page.getByLabel('Free-form notes', { exact: true }).fill('Typing survives live ticks');
+  const beforeClock = await page.locator('.match-clock').textContent();
+  await page.waitForFunction(before => document.querySelector('.match-clock').textContent !== before, beforeClock);
+  assert.equal(await page.getByLabel('Free-form notes', { exact: true }).inputValue(), 'Typing survives live ticks');
+  assert.equal(await page.getByLabel('Free-form notes', { exact: true }).evaluate(el => el === document.activeElement), true);
+  await open('capture=1&scenario=night-elf');
+  await page.getByRole('button', { name: 'New plan for this matchup' }).click();
+  assert.equal(await page.getByLabel('Your race', { exact: true }).inputValue(), 'night-elf');
+  assert.equal(await page.getByLabel('Opponent race', { exact: true }).inputValue(), 'undead');
+  await page.getByRole('button', { name: 'Attach current match' }).click();
+  assert.equal(await page.locator('.saved-match').count(), 1);
+  await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true, 'mobile overflow');
-  if (config.surfaces.includes('streamOverlay')) {
-    await page.setViewportSize({ width: 1440, height: 960 });
-    await open('view=overlay&demo=1&capture=1');
-    assert.equal(await page.locator('header').isVisible(), false);
-    assert.equal(await page.evaluate(() => getComputedStyle(document.body).backgroundColor), 'rgba(0, 0, 0, 0)');
-    const target = config.slug === 'resource-monitor' ? '.resource-card' : config.slug === 'clean-overlay' ? '.broadcast-strip' : '.synced-title-output';
-    assert.equal(await page.locator(target).first().isVisible(), true);
-    await page.evaluate(() => document.body.dataset.synchronized = 'false');
-    assert.equal(await page.locator(target).first().isVisible(), false, 'stale overlay must not look live');
-    await open('view=overlay&demo=1&capture=1&scenario=' + (config.slug === 'settings-playground' ? 'off-air' : 'no-match'));
-    assert.equal(await page.locator(target).first().isVisible(), false, 'inactive output must be hidden');
-  }
+  const otherWindow = JSON.stringify({ version: 2, plans: [] });
+  await page.evaluate(({ key, data }) => localStorage.setItem(key, data), { key, data: otherWindow });
+  await page.getByLabel('Free-form notes', { exact: true }).fill('Do not overwrite the other window');
+  await page.getByText(/changed in another window/).waitFor();
+  assert.equal(await page.evaluate(k => localStorage.getItem(k), key), otherWindow);
+  // Simulate an existing user's retired store, then a second reload: no loss or duplicate migration.
+  const legacy = JSON.stringify([{ id: 'old-match', map: 'Autumn Leaves', mode: '1v1', time: 55, players: ['A', 'B'], note: 'My old private notes' }]);
+  await page.evaluate(({ key, legacyKey, legacy }) => { localStorage.removeItem(key); localStorage.setItem(legacyKey, legacy); }, { key, legacyKey, legacy });
+  await open('capture=1');
+  assert.equal(await page.getByLabel('Your race', { exact: true }).inputValue(), '');
+  assert.equal(await page.getByLabel('Free-form notes', { exact: true }).inputValue(), 'My old private notes');
+  assert.equal(await page.locator('.saved-match').count(), 1);
+  assert.equal(await page.evaluate(k => localStorage.getItem(k), legacyKey), legacy);
+  await open('capture=1');
+  assert.equal(await page.locator('.notebook-entry').count(), 1);
+  await page.evaluate(k => localStorage.setItem(k, 'not valid JSON'), key);
+  await open('capture=1');
+  await page.getByText(/storage is unavailable or unreadable/).waitFor();
+  await page.getByRole('button', { name: 'New matchup plan', exact: true }).click();
+  assert.equal(await page.evaluate(k => localStorage.getItem(k), key), 'not valid JSON');
   await page.goto(base + '/?demo=0');
-  await page.waitForFunction(() => document.body.innerText.includes('Opening localhost directly does not authorize') || document.body.innerText.includes('Could not start'), { timeout: 20000 });
-  assert.equal(await page.locator('.badge').textContent(), 'LIVE CONNECTION');
-  assert.notEqual(await page.locator('body').getAttribute('data-synchronized'), 'true');
-  if (config.slug === 'match-dashboard') assert.equal(await page.locator('.notebook-entry').count(), 0, 'demo notes must not enter live notebook');
+  await page.getByText(/Opening localhost directly does not authorize|Could not start/).first().waitFor({ timeout: 20000 });
+  assert.equal(await page.locator('.notebook-entry').count(), 0, 'demo and live remain separate');
+  await page.getByRole('button', { name: 'New matchup plan', exact: true }).click();
+  await page.getByLabel('Free-form notes', { exact: true }).fill('Offline live notebook still works');
+  assert.equal(await page.getByRole('button', { name: 'Attach current match' }).isDisabled(), true);
+  await page.evaluate(() => { Storage.prototype.setItem = () => { throw new DOMException('Quota exceeded', 'QuotaExceededError'); }; });
+  await page.getByLabel('Free-form notes', { exact: true }).fill('Keep unsaved edits available for export');
+  await page.getByText(/Could not save. Your changes are still on screen/).waitFor();
+  assert.equal(await page.getByLabel('Free-form notes', { exact: true }).inputValue(), 'Keep unsaved edits available for export');
   assert.deepEqual(errors, []);
-  console.log(config.slug + ': workflow, minimal scopes, surfaces, inactive/stale output, persistence, and authorization checks passed.');
+  console.log('Match Notebook: preparation, matching, perspective, snapshots, persistence, export/import, migration, mobile and offline checks passed.');
 } finally { await browser.close(); await new Promise(resolve => server.httpServer.close(resolve)); }

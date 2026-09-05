@@ -1,6 +1,6 @@
 # Match Notebook
 
-A focused W3Booster example by **W3Pad**. Keep a snapshot of the current match, write private practice notes, and copy a match summary. This is intentionally **application-only**: a notebook requires typing and review, not space over the game.
+A focused W3Booster example: reusable 1v1 preparation by **your race → opponent race → map**. Keep a game plan, scouting cues, responses and lessons together. This is intentionally **application-only**: writing and reviewing plans belongs in a proper window, not over the game.
 
 [Try the demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer docs](https://website.w3booster.com/developer/) · [All examples](https://website.w3booster.com/developer/examples/)
 
@@ -21,12 +21,24 @@ Open **http://localhost:5173/**. Expect **DEMO DATA** and **Connected · synchro
 
 ## Try the actual workflow
 
-1. Start a demo match, then select **Keep match snapshot**.
-2. Write an opening plan, turning point, or next practice goal.
-3. Reload: the note survives. Updating the same snapshot preserves its notes.
-4. Select **Copy match summary + notes** to share only what you choose. A selectable-text fallback is available when browser clipboard access is blocked.
+1. Choose **New matchup plan**, even without a running match. Set your race and the opponent's race; leave the map blank for **Any map** advice.
+2. Write a **Game plan**, **Scouting cues**, **Responses**, **Mistakes to avoid**, and optional **Free-form notes**. Changes save as you type.
+3. Start the demo match: relevant plans appear above the library, map-specific first and general advice next. **New plan for this matchup** prefills the races and map but never creates notes automatically.
+4. **Attach current match** to a matching plan. Add a takeaway after the game. A repeated capture updates the same snapshot without replacing the plan; a plan can support many matches.
+5. Search races, maps and note text. **Copy plan** shares a readable summary (with a manual clipboard fallback). **Export notebook** downloads a private JSON backup; **Import notebook** merges it without overwriting existing plans. Reimporting identical content does not duplicate it; conflicting versions remain separate.
 
-The notebook keeps up to 20 manually captured snapshots in browser-local storage, with separate demo/live stores. It is not cloud-synced, account-isolated, automatic match history, replay analysis, or an operating-system file API. Anyone using this browser profile can access its notes. Clearing browser data removes them; copy important notes first. Unreadable storage is never silently overwritten. Deletion requires confirmation.
+The notebook keeps up to 100 plans, each with 20 supporting snapshots and 8,000 characters per writing field. It uses browser-local storage with separate demo/live stores. It is not cloud-synced, account-isolated, automatic match history, or replay analysis. Anyone using this browser profile can access its notes. Clearing browser data removes them; export important notes first. Backups contain notes and captured player names—keep them private. File import/export uses ordinary user-initiated browser uploads/downloads, not arbitrary filesystem access.
+
+### Matching, safety and migration
+
+- Suggestions require synchronized **1v1** data, two players, known races and a selected perspective. Team games and unresolved/random races do not receive misleading recommendations. A known non-observer broadcaster is selected initially; observers explicitly choose a player. You can switch sides at any time.
+- Map matching ignores case and surrounding whitespace, but does not guess aliases or conflate map versions. Blank means **Any map**. Notes for Human vs Orc never silently become advice for Orc vs Human.
+- No-match, disconnected and stale sessions still allow manual preparation; they cannot attach a stale match. Finished matches remain explicitly labeled. Live clock updates never remount a text editor.
+- Retired snapshot notes migrate once into unclassified plans, preserving all notes and supporting snapshots. Assign their races yourself; the app cannot infer whose perspective an old note represents. The original storage key remains untouched, and the new store uses `:v2`.
+- Malformed storage is never silently overwritten. Storage failures show a persistent warning and leave session edits available to export. Import validates the whole file (version, fields, limits and identities) before changing anything; files larger than 2 MB are rejected. Deletion and merging require confirmation.
+- If another window changes the same notebook, saving pauses instead of overwriting it. Export your edits, reload the other version, then import to merge. The 2 MB notebook limit is checked before accepting edits so exported notebooks remain importable.
+
+The pure data model is in [src/notebook-model.ts](src/notebook-model.ts), with migration, validation and merge tests in [scripts/notebook-model.test.mjs](scripts/notebook-model.test.mjs). The UI and SDK integration live in [src/notebook.ts](src/notebook.ts).
 
 ## Surfaces and minimum permissions
 

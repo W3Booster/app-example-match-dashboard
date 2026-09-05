@@ -8,7 +8,7 @@
   "repository": "https://github.com/W3Booster/app-example-match-dashboard",
   "scripts": {
     "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
-    "check": "tsc --noEmit && node --test scripts/fork.test.mjs",
+    "check": "tsc --noEmit && node --test scripts/fork.test.mjs scripts/notebook-model.test.mjs",
     "app:fork": "node scripts/fork.mjs",
     "build": "npm run check && vite build && node scripts/manifest.mjs",
     "preview": "vite preview --host 127.0.0.1 --port 5173 --strictPort",

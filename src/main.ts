@@ -9,7 +9,7 @@ document.body.dataset.application = w3boosterApp.clientId;
 // One repository, one app.
 const view = query.get('view') || 'application';
 const theme = 'arena';
-const presentation = { brand: 'MATCH NOTEBOOK', title: 'Play. Reflect. Improve.', description: 'Keep a match snapshot and private practice notes. Copy a useful summary when you are ready. App only: your notes never belong over the game.' };
+const presentation = { brand: 'MATCH NOTEBOOK', title: 'Your next matchup. A better plan.', description: 'Prepare by race and map. Keep scouting cues, responses and lessons together, then bring the right notes into your next 1v1.' };
 document.body.dataset.theme = theme;
 document.title = presentation.brand + ' · W3Booster Examples';
 // Direct visits start offline; registered W3Booster URLs explicitly select demo=0.

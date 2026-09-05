@@ -11,7 +11,7 @@ export function scenarioState(name: string) {
   if (name === 'unknown-race') return { ...state, players: state.players.map(({ race: _race, ...player }) => player) };
   if (name === 'no-match') return { ...state, match: { id: '', status: 'none' as const, gameTime: 0, mode: '' }, players: [] };
   if (name === 'missing-data') return {
-    match: state.match, capabilities: ['match', 'players'] as const,
+    gameContext: state.gameContext, match: state.match, capabilities: ['match', 'players'] as const,
     players: state.players.map(({ id, name, race, team }) => ({ id, name, race, team }))
   };
   if (name === 'finished') return { ...state, match: { ...state.match, status: 'finished' as const } };

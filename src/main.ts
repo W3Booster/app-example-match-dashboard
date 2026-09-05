@@ -66,6 +66,7 @@ catch (error) {
   const info = classifyW3BoosterError(error);
   feedback.textContent = info.kind === 'permission' ? 'Open Apps → Developer → My apps → Test locally in W3Booster. Opening localhost directly does not authorize live data.'
     : info.code === 'APPLICATION_DEFINITION_MISMATCH' ? 'Your app definition changed. Run npm run w3booster:sync, restart the app, and launch again.'
+    : info.code === 'CONFIGURATION' || info.code === 'UNSUPPORTED_PROTOCOL' ? 'Match Notebook needs a matching app and W3Booster update before it can connect.'
     : info.kind === 'abort' ? '' : `Could not start (${info.code}). Check your connection, then reload. Try ?demo=1 to work offline.`;
 }
 window.addEventListener('pagehide', () => { uiLifetime.abort(); void runtime.stop(); }, { once: true, signal });

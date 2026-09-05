@@ -71,6 +71,20 @@ try {
   await page.getByText(/Opening localhost directly does not authorize|Could not start/).first().waitFor();
   assert.equal(await page.locator('.note-editor textarea, .note-editor button').count(), 0, 'demo does not become live notes');
 
+  // A live launch must negotiate the current protocol, independently of demo fixtures.
+  let requestedProtocols;
+  await page.route('**/stream/v1/stream-tickets', async route => {
+    requestedProtocols = route.request().postDataJSON().protocolVersions;
+    await route.fulfill({ status: 400, contentType: 'application/json',
+      headers: { 'access-control-allow-origin': '*' },
+      body: JSON.stringify({ error: 'This server supports a different W3Booster protocol.' }) });
+  });
+  await page.goto(base + '/?demo=0');
+  await page.getByText('Match Notebook needs a matching app and W3Booster update before it can connect.', { exact: true }).waitFor();
+  assert.deepEqual(requestedProtocols, ['2.0']);
+  assert.equal(await page.locator('.note-editor textarea, .note-editor button').count(), 0);
+  await page.unroute('**/stream/v1/stream-tickets');
+
   // Exercise actual start/end events without reloading or adding hooks to the app.
   dev = await createServer({ server: { host: '127.0.0.1', port: 0, strictPort: false } }); await dev.listen();
   await page.goto('http://127.0.0.1:' + dev.httpServer.address().port + '/?capture=1');

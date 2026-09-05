@@ -1,6 +1,6 @@
 {
   "name": "Match Notebook",
-  "description": "Keep a match snapshot, write private practice notes, and copy a useful summary. An app-only notebook with browser-local storage; nothing is sent to an overlay.",
+  "description": "Prepare 1v1 plans by your race, opponent race and map. Keep scouting cues, responses and lessons together, find matching advice, and attach supporting matches. Private browser-local notes with export/import.",
   "surfaces": [
     "application"
   ],

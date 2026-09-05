@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Match Dashboard — a standalone W3Booster TypeScript example",
+  "description": "Match Notebook — a focused W3Booster workflow example",
   "license": "MIT",
   "repository": "https://github.com/W3Booster/app-example-match-dashboard",
   "scripts": {
@@ -33,5 +33,6 @@
     "clientId": "app_737ab3cff407f745a2b64dff",
     "settingsOutput": "src/w3booster.generated.ts",
     "endpoint": "https://api.w3booster.com"
-  }
+  },
+  "author": "W3Pad"
 }

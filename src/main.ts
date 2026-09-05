@@ -1,7 +1,7 @@
-import './style.css';
+import './notebook.css';
 import { classifyW3BoosterError } from '@w3booster/sdk';
 import { w3boosterApp } from './w3booster.generated';
-import { dashboard } from './render';
+import { notebook } from './notebook';
 import { element } from './ui';
 
 const query = new URLSearchParams(location.search);
@@ -9,7 +9,7 @@ document.body.dataset.application = w3boosterApp.clientId;
 // One repository, one app.
 const view = query.get('view') || 'application';
 const theme = 'arena';
-const presentation = { brand: 'MATCH DASHBOARD', title: 'Every match. At a glance.', description: 'A small live match dashboard: players, teams, map, game clock, lifecycle, and compact windows. Runnable demo scenarios and full TypeScript source included.' };
+const presentation = { brand: 'MATCH NOTEBOOK', title: 'Play. Reflect. Improve.', description: 'Keep a match snapshot and private practice notes. Copy a useful summary when you are ready. App only: your notes never belong over the game.' };
 document.body.dataset.theme = theme;
 document.title = presentation.brand + ' · W3Booster Examples';
 // Direct visits start offline; registered W3Booster URLs explicitly select demo=0.
@@ -47,7 +47,7 @@ const footer = element('footer');
 for (const [text, href] of [['Build your own', 'https://website.w3booster.com/developer/first-app/'], ['View source', 'https://github.com/W3Booster/app-example-match-dashboard'], ['SDK reference', 'https://website.w3booster.com/developer/api/']]) {
   const link = element('a', text); link.href = href; footer.append(link);
 }
-const sourceLink = element('a', 'Read this example’s code ↗', 'source-link'); sourceLink.href = 'https://github.com/W3Booster/app-example-match-dashboard/blob/main/src/render.ts'; sourceLink.target = '_blank'; sourceLink.rel = 'noopener noreferrer'; controls.append(sourceLink);
+const sourceLink = element('a', 'Read this example’s code ↗', 'source-link'); sourceLink.href = 'https://github.com/W3Booster/app-example-match-dashboard/blob/main/src/notebook.ts'; sourceLink.target = '_blank'; sourceLink.rel = 'noopener noreferrer'; controls.append(sourceLink);
 shell.append(header, intro);
 shell.append(controls, status, content, feedback, diagnostic, footer); root.replaceChildren(shell);
 const demoOptions = demo ? { state: (await import('./scenarios')).scenarioState(query.get('scenario') || 'match'), interval: query.get('capture') === '1' || ['no-match', 'finished'].includes(query.get('scenario') || '') ? 0 : 1000 } : undefined;
@@ -56,6 +56,7 @@ const cachedRuntime = import.meta.hot?.data.runtime as ReturnType<typeof w3boost
 const runtime = cachedRuntime || w3boosterApp.createRuntime({ retry: true, ...(demoOptions ? { demo: demoOptions } : {}) });
 const uiLifetime = new AbortController();
 const signal = uiLifetime.signal;
+content.append(notebook(runtime, demo, signal));
 
 runtime.lifecycle.subscribe(snapshot => {
   status.textContent = snapshot.status === 'connected'
@@ -63,7 +64,6 @@ runtime.lifecycle.subscribe(snapshot => {
     : `${snapshot.status}${snapshot.retry ? ` · attempt ${snapshot.retry.attempt}` : ''}`;
   document.body.dataset.connection = snapshot.status;
   document.body.dataset.synchronized = String(snapshot.isSynchronized);
-  content.replaceChildren(dashboard(snapshot.state));
   details.textContent = JSON.stringify({ mode: demo ? 'demo' : 'live', status: snapshot.status, synchronized: snapshot.isSynchronized, match: snapshot.state?.match.status, dataCapabilities: snapshot.state?.capabilities || [], host: snapshot.host, definitionRevision: w3boosterApp.revision }, null, 2);
 }, { signal });
 runtime.client.on('issue', issue => { feedback.textContent = `A recoverable ${issue.source} issue occurred. See the browser console.`; console.warn(issue.source, issue.error); }, { signal });

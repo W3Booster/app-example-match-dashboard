@@ -8,7 +8,7 @@ You can browse and write notes before playing. A new 1v1 game opens the detected
 
 Games against the computer work too. If a race is hidden or reported as Random, choose its actual race in the notebook; this choice lasts for the current game. If your player cannot be detected, choose your player. No manual setup is needed when the game supplies both races and your player. Try the **computer random** demo scenario to see this fallback.
 
-[Demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer guide](https://website.w3booster.com/developer/first-app/) · [All examples](https://website.w3booster.com/developer/examples/)
+[Demo](https://w3booster.github.io/app-example-match-dashboard/) · [Developer guide](https://w3booster.com/developer/first-app/) · [All examples](https://w3booster.com/developer/examples/)
 
 ## Run
 
@@ -41,7 +41,7 @@ Notes stay in the current browser profile, separately for demo/live. They are no
 2. Register **Application only** at `http://localhost:5173/?demo=0`, with `match:read` and `players:read`. No settings or overlay URLs are needed.
 3. Run `npm run app:fork -- YOUR_NEW_CLIENT_ID`, then use **Test locally** in W3Booster. A source clone does not inherit the official app's authorization.
 
-Failed live authorization never falls back to demo data. After changing a registered contract, use `npm run w3booster:sync`; `npm run w3booster:check` verifies the binding. See the [first-app guide](https://website.w3booster.com/developer/first-app/) for details.
+Failed live authorization never falls back to demo data. After changing a registered contract, use `npm run w3booster:sync`; `npm run w3booster:check` verifies the binding. See the [first-app guide](https://w3booster.com/developer/first-app/) for details.
 
 ## Verify and publish
 
@@ -56,4 +56,4 @@ Tests cover all 16 matchups, notes across maps, separate map advice, preserved e
 
 ![Match Notebook: a single free-form matchup note](docs/screenshot.png)
 
-MIT licensed; retain [LICENSE](LICENSE). The stable repository name and client ID preserve existing installations. For a complete production starting point, see [Match Vision](https://website.w3booster.com/developer/match-vision/).
+MIT licensed; retain [LICENSE](LICENSE). The stable repository name and client ID preserve existing installations. For a complete production starting point, see [Match Vision](https://w3booster.com/developer/match-vision/).

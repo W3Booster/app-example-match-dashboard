@@ -2,7 +2,13 @@ import { createDemoState } from '@w3booster/sdk/testing';
 
 export const scenarios = ['match', 'computer', 'computer-random', 'missing-player', 'no-match', 'missing-data', 'teams', 'observer', 'unknown-race', 'night-elf', 'finished'] as const;
 export function scenarioState(name: string) {
-  const fixture = createDemoState();
+  const full = createDemoState();
+  // These examples do not consume entity maps. Keep duplicated team fixtures
+  // free of unit instance IDs that would belong to two players at once.
+  const fixture = { ...full,
+    capabilities: full.capabilities.filter(value => !['heroes', 'units', 'buildings', 'production'].includes(value)),
+    players: full.players.map(({ heroes: _heroes, units: _units, buildings: _buildings, ...player }) => player),
+  };
   const state = { ...fixture, match: { ...fixture.match, gameTime: 872 } };
   if (name === 'computer' || name === 'computer-random') return { ...state, players: state.players.map((p, i) => ({ ...p, isAI: i === 1, ...(i === 1 ? { name: 'Computer (Normal)', race: name === 'computer-random' ? 'random' : 'orc' } : {}) })) };
   if (name === 'missing-player') return { ...state, match: { ...state.match, broadcasterPlayerId: 'missing' } };

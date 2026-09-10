@@ -88,7 +88,7 @@ try {
   });
   await page.goto(base + '/?demo=0');
   await page.getByText('Match Notebook needs a matching app and W3Booster update before it can connect.', { exact: true }).waitFor();
-  assert.deepEqual(requestedProtocols, ['2.0']);
+  assert.deepEqual(requestedProtocols, ['3.0']);
   assert.equal(await page.locator('.note-editor textarea').count(), 0);
   await page.unroute('**/stream/v1/stream-tickets');
 

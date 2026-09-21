@@ -57,3 +57,7 @@ Tests cover all 16 matchups, notes across maps, separate map advice, preserved e
 ![Match Notebook: a single free-form matchup note](docs/screenshot.png)
 
 MIT licensed; retain [LICENSE](LICENSE). The stable repository name and client ID preserve existing installations. For a complete production starting point, see [Match Vision](https://w3booster.com/developer/match-vision/).
+
+## Current SDK guides
+
+This app pins published SDK 4.6.0. See [data availability](https://w3booster.com/developer/data-availability/), [analytics](https://w3booster.com/developer/analytics/), [settings and shortcuts](https://w3booster.com/developer/settings/) and the [upgrade guide](https://w3booster.com/developer/upgrading/) before adding features. Optional fields can be absent; request only the data your app uses.
